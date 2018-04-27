@@ -1,0 +1,2 @@
+#name "grading/s32.test.cool"
+#1 ERROR "Unmatched *)"

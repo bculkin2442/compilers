@@ -1,0 +1,4 @@
+#name "grading/s19.test.cool"
+#2 ERROR "Unterminated string constant"
+#2 OBJECTID d
+#2 ERROR "Unterminated string constant"
