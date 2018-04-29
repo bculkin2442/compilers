@@ -76,7 +76,7 @@ nonterminal Feature     feature;
 nonterminal Formal      formal;
 nonterminal Formals     formal_list;
 nonterminal Expression  expression;
-nonterminal Expressions expression_list, call_list;
+nonterminal Expressions expression_list;
 nonterminal Case        case;
 nonterminal Cases       case_list;
 
@@ -148,13 +148,13 @@ feature_list
 /* Either a method or an attribute. */
 feature
 	::= /* Method. */
-	    OBJECTID:i LPAREN formal_list:fl RPAREN COLON TYPEID:r LBRACE expression:e RBRACE SEMI
+	    OBJECTID:i LPAREN formal_list:fl RPAREN COLON OBJECTID:r LBRACE expression:e RBRACE SEMI
 		{: RESULT = new method(curr_lineno(), i, fl, r, e); :}
 	    /* Default attribute. */
-	|   OBJECTID:i COLON TYPEID:t SEMI
+	|   OBJECTID:i COLON OBJECTID:t SEMI
 		{: RESULT = new attr(curr_lineno(), i, t, new no_expr(curr_lineno())); :}
 	    /* Non-default attribute. */
-	|   OBJECTID:i COLON TYPEID:t ASSIGN expression:e SEMI
+	|   OBJECTID:i COLON OBJECTID:t ASSIGN expression:e SEMI
 		{: RESULT = new attr(curr_lineno(), i, t, e); :}
 	|   error SEMI {:
 		parser.syntax_error((java_cup.runtime.Symbol) CUP$CoolParser$stack.peek());
@@ -163,27 +163,17 @@ feature
 	;
 
 formal_list
-	::= 
-	    /* No formals. */
-	        {: RESULT = new Formals(curr_lineno()); :}
-	|    /* Single formal. */
+	::= /* Single formal. */
 	    formal:f
 	    	{: RESULT = new Formals(curr_lineno()).appendElement(f); :}
     	|
 	    /* Multiple formals. */
-	    formal_list:fl COMMA formal:f
+	    formal_list:fl formal:f
 	    	{: RESULT = fl.appendElement(f); :}
 	|   error {:
 		parser.syntax_error((java_cup.runtime.Symbol) CUP$CoolParser$stack.peek());
-
 		RESULT = new Formals(curr_lineno());
 	:}
-	;
-
-formal
-	::= /* A formal. */
-	    OBJECTID:i COLON TYPEID:t
-		{: RESULT = new formalc(curr_lineno(), i, t); :}
 	;
 
 case_list
@@ -195,23 +185,18 @@ case_list
 	    	{: RESULT = cl.appendElement(c); :}
 	;
 
-case
-	::= OBJECTID:i COLON TYPEID:t DARROW expression:e SEMI
-		{: RESULT = new branch(curr_lineno(), i, t, e); :}
-	;
-
 expression
 	::= /* Assignment. */
 	    OBJECTID:i ASSIGN expression:e
 	    	{: RESULT = new assign(curr_lineno(), i, e); :}
 	|   /* Static dispatch. */
-	    expression:e AT TYPEID:t DOT OBJECTID:m LPAREN call_list:el RPAREN
+	    expression:e AT TYPEID:t DOT OBJECTID:m LPAREN expression_list:el RPAREN
 	    	{: RESULT = new static_dispatch(curr_lineno(), e, t, m, el); :}
 	|   /* Dispatch on object. */
-	    expression:e DOT OBJECTID:m LPAREN call_list:el RPAREN
+	    expression:e DOT OBJECTID:m LPAREN expression_list:el RPAREN
 	    	{: RESULT = new dispatch(curr_lineno(), e, m, el); :}
 	|   /* Dispatch on self. */
-	    OBJECTID:m LPAREN call_list:el RPAREN {:
+	    OBJECTID:m LPAREN expression_list:el RPAREN {:
 		    RESULT = new dispatch(curr_lineno(), new object(curr_lineno(),
 					    dispID), m, el);
 	    :}
@@ -281,10 +266,6 @@ expression
 	|  /* boolean const. */
 	   BOOL_CONST:b
 		{: RESULT = new bool_const(curr_lineno(), b); :}
-	/*| error {: 
-		parser.syntax_error((java_cup.runtime.Symbol) CUP$CoolParser$stack.peek());
-		RESULT = new no_expr(curr_lineno());
-	  :}*/
 	;
 
 expression_list
@@ -295,16 +276,5 @@ expression_list
 		{: RESULT = new Expressions(curr_lineno()).appendElement(e); :}
 	    /* Multiple expressions. */
 	|   expression_list:el expression:e SEMI
-		{: RESULT = el.appendElement(e); :}
-	;
-
-call_list
-	::= /* No expressions. */
-		{: RESULT = new Expressions(curr_lineno()); :}
-	    /* One expression. */
-	|   expression:e
-		{: RESULT = new Expressions(curr_lineno()).appendElement(e); :}
-	    /* Multiple expressions. */
-	|   call_list:el COMMA expression:e
 		{: RESULT = el.appendElement(e); :}
 	;
