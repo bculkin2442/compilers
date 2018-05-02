@@ -46,7 +46,7 @@ parser code {:
 	String filename = action_obj.curr_filename().getString();
         System.err.print("\"" + filename + "\", line " + lineno + 
 		         ": parse error at or near ");
-        Utilities.printToken(cur_token);
+        Utilities.printToken(this.cur_token);
 	omerrs++;
 	if (omerrs>50) {
 	   System.err.println("More than 50 errors");
